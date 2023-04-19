@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
+import 'package:flutter_movie_app/main.dart';
+import 'package:flutter_movie_app/models/load_status.dart';
+import 'package:flutter_movie_app/models/movie.dart';
 import 'package:flutter_movie_app/pages/home/home_viewmodel.dart';
+import 'package:flutter_movie_app/pages/home/widgets/popular_movie_item.dart';
+import 'package:flutter_movie_app/pages/home/widgets/upcoming_movie_item.dart';
+import 'package:flutter_movie_app/repositories/movie_repository.dart';
 import 'package:flutter_movie_app/utils/app_colors.dart';
 import 'package:flutter_movie_app/utils/app_icons.dart';
-import 'package:flutter_movie_app/utils/app_images.dart';
 import 'package:flutter_movie_app/utils/app_text_styles.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -19,8 +22,15 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> implements HomeViewModel {
   late HomeViewModel vm;
   late TextEditingController _searchController;
-  late PageController _controller;
-  int popularMovieIndex = 0;
+  late PageController _popularController;
+  late PageController _upcomingController;
+  LoadStatus loadDataStatus = LoadStatus.initial;
+  int popularMovieIndex = 1;
+  int upcomingMovieIndex = 1;
+  List<Movie> popularMovies = [];
+  List<Movie> upcomingMovies = [];
+  double currPopularPageValue = 1.0;
+  double currUpcomingPageValue = 1.0;
 
   @override
   void initState() {
@@ -28,8 +38,21 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
     vm = this;
     vm.init();
     _searchController = TextEditingController();
-    _controller =
-        PageController(viewportFraction: 0.75, initialPage: popularMovieIndex);
+    _popularController =
+        PageController(viewportFraction: 0.85, initialPage: popularMovieIndex);
+    _upcomingController =
+        PageController(viewportFraction: 0.55, initialPage: upcomingMovieIndex);
+
+    _popularController.addListener(() {
+      setState(() {
+        currPopularPageValue = _popularController.page!;
+      });
+    });
+    _upcomingController.addListener(() {
+      setState(() {
+        currUpcomingPageValue = _upcomingController.page!;
+      });
+    });
   }
 
   @override
@@ -52,26 +75,140 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
   }
 
   Widget _buildContent(BuildContext context) {
+    if (loadDataStatus == LoadStatus.success) {
+      return SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 24.h,
+            ),
+            _buildGreeting(),
+            SizedBox(
+              height: 20.h,
+            ),
+            _buildSearch(),
+            SizedBox(
+              height: 24.h,
+            ),
+            _buildMostPopular(),
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              height: 100,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 50),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildCategoryItem(AppIcons.icCategory, "Genres"),
+                    _buildCategoryItem(AppIcons.icTvSeries, "TV series"),
+                    _buildCategoryItem(AppIcons.icMovieRoll, "Movies"),
+                    _buildCategoryItem(AppIcons.icCinema, "In Theatre"),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 35.h,
+            ),
+            _buildUpcomingReleases(),
+            SizedBox(
+              height: 16.h,
+            ),
+          ],
+        ),
+      );
+    } else if (loadDataStatus == LoadStatus.loading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Colors.white,
+          strokeWidth: 4,
+        ),
+      );
+    } else {
+      return const Center(
+        child: Text("Error"),
+      );
+    }
+  }
+
+  Widget _buildUpcomingReleases() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          height: 24.h,
+        Padding(
+          padding: const EdgeInsets.only(left: 50),
+          child: Text(
+            "Upcoming Releases",
+            style: AppTextStyles.baseTextStyle.copyWith(
+                fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
+          ),
         ),
-        _buildGreeting(),
-        SizedBox(
-          height: 20.h,
+        const SizedBox(
+          height: 15,
         ),
-        _buildSearch(),
         SizedBox(
-          height: 24.h,
+          height: 220.h,
+          width: double.infinity,
+          child: PageView.builder(
+            itemCount: upcomingMovies.length,
+            onPageChanged: (index) {
+              setState(() {
+                upcomingMovieIndex = index;
+              });
+            },
+            controller: _upcomingController,
+            itemBuilder: (_, index) {
+              final height = 220.h;
+              Matrix4 mt = Matrix4.identity();
+              var lowestScale = 0.8;
+              var highestScale = 1.0;
+              final diffScale = highestScale - lowestScale;
+              if (index == currUpcomingPageValue.floor()) {
+                var currScale =
+                    highestScale - (currUpcomingPageValue - index) * diffScale;
+                var currTrans = height * (1 - currScale) / 2;
+                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
+                  ..setTranslationRaw(0, currTrans, 0);
+              } else if (index == currUpcomingPageValue.floor() + 1) {
+                var currScale = lowestScale +
+                    (currUpcomingPageValue - index + 1) * diffScale;
+                var currTrans = height * (1 - currScale) / 2;
+                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
+                  ..setTranslationRaw(0, currTrans, 0);
+              } else if (index == currUpcomingPageValue.floor() - 1) {
+                var currScale = lowestScale +
+                    (currUpcomingPageValue - index - 1) * diffScale;
+                var currTrans = height * (1 - currScale) / 2;
+                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
+                  ..setTranslationRaw(0, currTrans, 0);
+              } else {
+                var currScale = lowestScale;
+                var currTrans = height * (1 - currScale) / 2;
+                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
+                  ..setTranslationRaw(0, currTrans, 0);
+              }
+              final movie = upcomingMovies[index];
+              return Transform(
+                transform: mt,
+                child: UpcomingMovieItem(
+                  backgroundImage: movie.backdropPath,
+                ),
+              );
+            },
+          ),
         ),
-        _buildMostPopular()
+        const SizedBox(
+          height: 15,
+        ),
+        _buildPageIndicator(upcomingMovieIndex % 3),
       ],
     );
   }
 
-  Column _buildMostPopular() {
+  Widget _buildMostPopular() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -87,29 +224,11 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
           height: 15,
         ),
         _buildPopularMovies(),
-        const SizedBox(
-          height: 20,
-        ),
-        SizedBox(
-          height: 100,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 50),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildCategoryItem(AppIcons.icCategory, "Genres"),
-                _buildCategoryItem(AppIcons.icTvSeries, "TV series"),
-                _buildCategoryItem(AppIcons.icMovieRoll, "Movies"),
-                _buildCategoryItem(AppIcons.icCinema, "In Theatre"),
-              ],
-            ),
-          ),
-        )
       ],
     );
   }
 
-  Container _buildCategoryItem(String icon, String title) {
+  Widget _buildCategoryItem(String icon, String title) {
     return Container(
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20.r),
@@ -139,90 +258,60 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
     );
   }
 
-  Column _buildPopularMovies() {
+  Widget _buildPopularMovies() {
     return Column(
       children: [
         SizedBox(
           height: 160.h,
           width: double.infinity,
           child: PageView.builder(
-            itemCount: 50,
-            onPageChanged: (index) {
-              setState(() {
-                popularMovieIndex = index;
-              });
-            },
-            controller: _controller,
-            itemBuilder: (_, index) => Container(
-              margin: const EdgeInsets.all(10),
-              height: 160.h,
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.white.withOpacity(0.2),
-                      offset: const Offset(4, 4),
-                      blurRadius: 15,
-                      spreadRadius: 0)
-                ],
-              ),
-              width: double.infinity,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(26),
-                    child: Image.asset(
-                      AppImages.imgBackground,
-                      fit: BoxFit.fill,
-                    ),
+              itemCount: popularMovies.length,
+              onPageChanged: (index) {
+                setState(() {
+                  popularMovieIndex = index;
+                });
+              },
+              controller: _popularController,
+              itemBuilder: (_, index) {
+                final height = 160.h;
+                Matrix4 mt = Matrix4.identity();
+                var lowestScale = 0.8;
+                var highestScale = 1.0;
+                final diffScale = highestScale - lowestScale;
+                if (index == currPopularPageValue.floor()) {
+                  var currScale =
+                      highestScale - (currPopularPageValue - index) * diffScale;
+                  var currTrans = height * (1 - currScale) / 2;
+                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
+                    ..setTranslationRaw(0, currTrans, 0);
+                } else if (index == currPopularPageValue.floor() + 1) {
+                  var currScale = lowestScale +
+                      (currPopularPageValue - index + 1) * diffScale;
+                  var currTrans = height * (1 - currScale) / 2;
+                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
+                    ..setTranslationRaw(0, currTrans, 0);
+                } else if (index == currPopularPageValue.floor() - 1) {
+                  var currScale = lowestScale +
+                      (currPopularPageValue - index - 1) * diffScale;
+                  var currTrans = height * (1 - currScale) / 2;
+                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
+                    ..setTranslationRaw(0, currTrans, 0);
+                } else {
+                  var currScale = lowestScale;
+                  var currTrans = height * (1 - currScale) / 2;
+                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
+                    ..setTranslationRaw(0, currTrans, 0);
+                }
+                final movie = popularMovies[index];
+                return Transform(
+                  transform: mt,
+                  child: PopularMovieItem(
+                    movieName: movie.title,
+                    imdbRating: movie.voteAverage.toStringAsFixed(1),
+                    backgroundImage: movie.backdropPath,
                   ),
-                  Positioned(
-                    left: 26.w,
-                    bottom: 15.h,
-                    child: Text(
-                      "DeadPool 2",
-                      style: AppTextStyles.baseTextStyle.copyWith(
-                          fontSize: 18.r,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Positioned(
-                    right: 26.w,
-                    bottom: 20.h,
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                      height: 14.h,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8.r),
-                        color: const Color(0xFFF5C518),
-                      ),
-                      child: Row(
-                        children: [
-                          SvgPicture.asset(
-                            AppIcons.icImdb,
-                            width: 14.w,
-                            height: 5.h,
-                            fit: BoxFit.fill,
-                          ),
-                          SizedBox(
-                            width: 4.w,
-                          ),
-                          Text(
-                            "8.5",
-                            style: AppTextStyles.baseTextStyle.copyWith(
-                                fontSize: ScreenUtil().setSp(6),
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                );
+              }),
         ),
         const SizedBox(
           height: 15,
@@ -232,7 +321,7 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
     );
   }
 
-  SizedBox _buildPageIndicator(int activeIndex) {
+  Widget _buildPageIndicator(int activeIndex) {
     return SizedBox(
       height: 10.h,
       child: Center(
@@ -261,7 +350,7 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
     );
   }
 
-  Padding _buildSearch() {
+  Widget _buildSearch() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 50.w),
       child: TextFormField(
@@ -315,7 +404,7 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
     );
   }
 
-  Padding _buildGreeting() {
+  Widget _buildGreeting() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 64.w),
       child: Row(
@@ -326,17 +415,19 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
             text: TextSpan(
               children: [
                 TextSpan(
-                    text: "Hello, ",
-                    style: AppTextStyles.baseTextStyle.copyWith(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white)),
+                  text: "Hello, ",
+                  style: AppTextStyles.baseTextStyle.copyWith(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white),
+                ),
                 TextSpan(
-                    text: "Jane!",
-                    style: AppTextStyles.baseTextStyle.copyWith(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
+                  text: "Jane!",
+                  style: AppTextStyles.baseTextStyle.copyWith(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
               ],
             ),
           ),
@@ -351,5 +442,22 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
   }
 
   @override
-  void init() {}
+  Future<void> init() async {
+    try {
+      setState(() {
+        loadDataStatus = LoadStatus.loading;
+      });
+      final movieRepository = getIt<MovieRepository>();
+      popularMovies = await movieRepository.fetchPopularMovies();
+      upcomingMovies = await movieRepository.fetchUpcomingMovies();
+      setState(() {
+        loadDataStatus = LoadStatus.success;
+      });
+    } catch (e) {
+      debugPrint("HomePage/Init: ${e.toString()}");
+      setState(() {
+        loadDataStatus = LoadStatus.failed;
+      });
+    }
+  }
 }

@@ -7,4 +7,9 @@ abstract class AppIcons {
   static const icMovieRoll = "assets/icons/ic_movie_roll.svg";
   static const icCinema = "assets/icons/ic_cinema.svg";
   static const icCategory = "assets/icons/ic_category.svg";
+  static const icAccount = "assets/icons/ic_account.svg";
+  static const icFavorite = "assets/icons/ic_favorite.svg";
+  static const icShuffle = "assets/icons/ic_shuffle.svg";
+  static const icTicket = "assets/icons/ic_ticket.svg";
+  static const icHome = "assets/icons/ic_home.svg";
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_movie_app/pages/splash/splash_viewmodel.dart';
 import 'package:flutter_movie_app/utils/app_routes.dart';
-import 'package:flutter_movie_app/utils/base_viewmodel.dart';
 import 'package:get/get.dart';
 
 class SplashPage extends StatefulWidget {
@@ -25,16 +24,17 @@ class _SplashPageState extends State<SplashPage> implements SplashViewModel {
   Widget build(BuildContext context) {
     return const Scaffold(
       body: SafeArea(
-          child: Center(
-        child: CircularProgressIndicator(),
-      )),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
     );
   }
 
   @override
   void init() {
     Future.delayed(const Duration(seconds: 3)).then(
-      (value) => Get.toNamed(AppRoutes.home),
+          (value) => Get.toNamed(AppRoutes.main),
     );
   }
 }
