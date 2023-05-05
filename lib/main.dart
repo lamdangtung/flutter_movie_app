@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_movie_app/app.dart';
 import 'package:flutter_movie_app/repositories/api/app_client.dart';
 import 'package:flutter_movie_app/repositories/movie_repository.dart';
@@ -8,7 +9,10 @@ GetIt getIt = GetIt.instance;
 
 void main() {
   setupDI();
-  runApp(const App());
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((_) {
+    runApp(const App());
+  });
 }
 
 void setupDI() {

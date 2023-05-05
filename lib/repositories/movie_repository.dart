@@ -10,6 +10,8 @@ abstract class MovieRepository {
   Future<List<Movie>> fetchPopularMovies();
 
   Future<List<Movie>> fetchUpcomingMovies();
+
+  Future<Movie> fetchMovieByMovieId(int movieId);
 }
 
 class MovieRepositoryImp implements MovieRepository {
@@ -34,6 +36,17 @@ class MovieRepositoryImp implements MovieRepository {
           (res[AppApi.resultsKey] as List).map((e) => Movie.fromJson(e)));
     } catch (e) {
       return [];
+    }
+  }
+
+  @override
+  Future<Movie> fetchMovieByMovieId(int movieId) async {
+    try {
+      final url = AppApi.baseURl + AppApi.moviePath + "/$movieId";
+      final res = await getIt<AppClient>().get(url);
+      return Movie.fromJson(res);
+    } catch (e) {
+      rethrow;
     }
   }
 }

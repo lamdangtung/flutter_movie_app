@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_movie_app/pages/home/home_page.dart';
 import 'package:flutter_movie_app/pages/main/main_viewmodel.dart';
 import 'package:flutter_movie_app/utils/app_colors.dart';
@@ -15,16 +16,11 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> implements MainViewModel {
   int selectedIndex = 0;
-  final icons = [
-    AppIcons.icHome,
-    AppIcons.icFavorite,
-    AppIcons.icTicket,
-    AppIcons.icAccount,
-    AppIcons.icShuffle
-  ];
+  final icons = [AppIcons.icHome, AppIcons.icFavorite, AppIcons.icTicket, AppIcons.icAccount, AppIcons.icShuffle];
 
   @override
   void initState() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
     super.initState();
   }
 
@@ -69,8 +65,7 @@ class _MainPageState extends State<MainPage> implements MainViewModel {
     );
   }
 
-  Widget _buildNavigationItem(
-      int activeIndex, int index, VoidCallback onPressed) {
+  Widget _buildNavigationItem(int activeIndex, int index, VoidCallback onPressed) {
     final isActive = activeIndex == index;
     return GestureDetector(
       onTap: onPressed,
@@ -91,9 +86,7 @@ class _MainPageState extends State<MainPage> implements MainViewModel {
               height: 8.h,
             ),
             DecoratedBox(
-              decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isActive ? Colors.white : Colors.transparent),
+              decoration: BoxDecoration(shape: BoxShape.circle, color: isActive ? Colors.white : Colors.transparent),
               child: SizedBox(
                 height: 8.h,
                 width: 8.w,

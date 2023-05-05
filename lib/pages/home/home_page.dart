@@ -8,9 +8,11 @@ import 'package:flutter_movie_app/pages/home/widgets/upcoming_movie_item.dart';
 import 'package:flutter_movie_app/repositories/movie_repository.dart';
 import 'package:flutter_movie_app/utils/app_colors.dart';
 import 'package:flutter_movie_app/utils/app_icons.dart';
+import 'package:flutter_movie_app/utils/app_routes.dart';
 import 'package:flutter_movie_app/utils/app_text_styles.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -38,10 +40,8 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
     vm = this;
     vm.init();
     _searchController = TextEditingController();
-    _popularController =
-        PageController(viewportFraction: 0.85, initialPage: popularMovieIndex);
-    _upcomingController =
-        PageController(viewportFraction: 0.55, initialPage: upcomingMovieIndex);
+    _popularController = PageController(viewportFraction: 0.85, initialPage: popularMovieIndex);
+    _upcomingController = PageController(viewportFraction: 0.5, initialPage: upcomingMovieIndex);
 
     _popularController.addListener(() {
       setState(() {
@@ -142,8 +142,7 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
           padding: const EdgeInsets.only(left: 50),
           child: Text(
             "Upcoming Releases",
-            style: AppTextStyles.baseTextStyle.copyWith(
-                fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
+            style: AppTextStyles.baseTextStyle.copyWith(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
           ),
         ),
         const SizedBox(
@@ -167,34 +166,35 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
               var highestScale = 1.0;
               final diffScale = highestScale - lowestScale;
               if (index == currUpcomingPageValue.floor()) {
-                var currScale =
-                    highestScale - (currUpcomingPageValue - index) * diffScale;
+                var currScale = highestScale - (currUpcomingPageValue - index) * diffScale;
                 var currTrans = height * (1 - currScale) / 2;
-                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
-                  ..setTranslationRaw(0, currTrans, 0);
+                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)..setTranslationRaw(0, currTrans, 0);
               } else if (index == currUpcomingPageValue.floor() + 1) {
-                var currScale = lowestScale +
-                    (currUpcomingPageValue - index + 1) * diffScale;
+                var currScale = lowestScale + (currUpcomingPageValue - index + 1) * diffScale;
                 var currTrans = height * (1 - currScale) / 2;
-                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
-                  ..setTranslationRaw(0, currTrans, 0);
+                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)..setTranslationRaw(0, currTrans, 0);
               } else if (index == currUpcomingPageValue.floor() - 1) {
-                var currScale = lowestScale +
-                    (currUpcomingPageValue - index - 1) * diffScale;
+                var currScale = lowestScale + (currUpcomingPageValue - index - 1) * diffScale;
                 var currTrans = height * (1 - currScale) / 2;
-                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
-                  ..setTranslationRaw(0, currTrans, 0);
+                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)..setTranslationRaw(0, currTrans, 0);
               } else {
                 var currScale = lowestScale;
                 var currTrans = height * (1 - currScale) / 2;
-                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
-                  ..setTranslationRaw(0, currTrans, 0);
+                mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)..setTranslationRaw(0, currTrans, 0);
               }
               final movie = upcomingMovies[index];
-              return Transform(
-                transform: mt,
-                child: UpcomingMovieItem(
-                  backgroundImage: movie.backdropPath,
+              return Hero(
+                tag: "movie",
+                child: GestureDetector(
+                  onTap: () {
+                    Get.toNamed(AppRoutes.movie, arguments: movie.id);
+                  },
+                  child: Transform(
+                    transform: mt,
+                    child: UpcomingMovieItem(
+                      backgroundImage: movie.posterPath,
+                    ),
+                  ),
                 ),
               );
             },
@@ -216,8 +216,7 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
           padding: const EdgeInsets.only(left: 50),
           child: Text(
             "Most Popular",
-            style: AppTextStyles.baseTextStyle.copyWith(
-                fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
+            style: AppTextStyles.baseTextStyle.copyWith(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
           ),
         ),
         const SizedBox(
@@ -230,9 +229,7 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
 
   Widget _buildCategoryItem(String icon, String title) {
     return Container(
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20.r),
-          gradient: AppColors.backgroundGradient),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20.r), gradient: AppColors.backgroundGradient),
       height: 95.h,
       width: 70.w,
       child: Column(
@@ -250,8 +247,7 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
           ),
           Text(
             title,
-            style: AppTextStyles.baseTextStyle.copyWith(
-                fontSize: 9, fontWeight: FontWeight.w400, color: Colors.white),
+            style: AppTextStyles.baseTextStyle.copyWith(fontSize: 9, fontWeight: FontWeight.w400, color: Colors.white),
           ),
         ],
       ),
@@ -279,36 +275,37 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
                 var highestScale = 1.0;
                 final diffScale = highestScale - lowestScale;
                 if (index == currPopularPageValue.floor()) {
-                  var currScale =
-                      highestScale - (currPopularPageValue - index) * diffScale;
+                  var currScale = highestScale - (currPopularPageValue - index) * diffScale;
                   var currTrans = height * (1 - currScale) / 2;
-                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
-                    ..setTranslationRaw(0, currTrans, 0);
+                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)..setTranslationRaw(0, currTrans, 0);
                 } else if (index == currPopularPageValue.floor() + 1) {
-                  var currScale = lowestScale +
-                      (currPopularPageValue - index + 1) * diffScale;
+                  var currScale = lowestScale + (currPopularPageValue - index + 1) * diffScale;
                   var currTrans = height * (1 - currScale) / 2;
-                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
-                    ..setTranslationRaw(0, currTrans, 0);
+                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)..setTranslationRaw(0, currTrans, 0);
                 } else if (index == currPopularPageValue.floor() - 1) {
-                  var currScale = lowestScale +
-                      (currPopularPageValue - index - 1) * diffScale;
+                  var currScale = lowestScale + (currPopularPageValue - index - 1) * diffScale;
                   var currTrans = height * (1 - currScale) / 2;
-                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
-                    ..setTranslationRaw(0, currTrans, 0);
+                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)..setTranslationRaw(0, currTrans, 0);
                 } else {
                   var currScale = lowestScale;
                   var currTrans = height * (1 - currScale) / 2;
-                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)
-                    ..setTranslationRaw(0, currTrans, 0);
+                  mt = Matrix4.diagonal3Values(1.0, currScale, 1.0)..setTranslationRaw(0, currTrans, 0);
                 }
                 final movie = popularMovies[index];
-                return Transform(
-                  transform: mt,
-                  child: PopularMovieItem(
-                    movieName: movie.title,
-                    imdbRating: movie.voteAverage.toStringAsFixed(1),
-                    backgroundImage: movie.backdropPath,
+                return Hero(
+                  tag: "movie",
+                  child: GestureDetector(
+                    onTap: () {
+                      Get.toNamed(AppRoutes.movie, arguments: movie.id);
+                    },
+                    child: Transform(
+                      transform: mt,
+                      child: PopularMovieItem(
+                        movieName: movie.title,
+                        imdbRating: movie.voteAverage.toStringAsFixed(1),
+                        backgroundImage: movie.backdropPath,
+                      ),
+                    ),
                   ),
                 );
               }),
@@ -335,9 +332,7 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: activeIndex == index
-                          ? AppColors.secondaryGradient
-                          : AppColors.secondaryGradient30),
+                      gradient: activeIndex == index ? AppColors.secondaryGradient : AppColors.secondaryGradient30),
                 ),
               ),
             );
@@ -354,8 +349,7 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 50.w),
       child: TextFormField(
-        style: AppTextStyles.baseTextStyle.copyWith(
-            fontSize: 18.sp, fontWeight: FontWeight.w400, color: Colors.white),
+        style: AppTextStyles.baseTextStyle.copyWith(fontSize: 18.sp, fontWeight: FontWeight.w400, color: Colors.white),
         controller: _searchController,
         decoration: InputDecoration(
           contentPadding: EdgeInsets.zero,
@@ -369,10 +363,8 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
               fit: BoxFit.contain,
             ),
           ),
-          hintStyle: AppTextStyles.baseTextStyle.copyWith(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w400,
-              color: Colors.white.withOpacity(0.2)),
+          hintStyle: AppTextStyles.baseTextStyle
+              .copyWith(fontSize: 18.sp, fontWeight: FontWeight.w400, color: Colors.white.withOpacity(0.2)),
           hintText: "Search",
           suffixIcon: Padding(
             padding: EdgeInsets.only(bottom: 12.h, top: 12.h),
@@ -386,18 +378,15 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(18.r),
-            borderSide:
-                BorderSide(color: Colors.white.withOpacity(0.2), width: 1.r),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.2), width: 1.r),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(18.r),
-            borderSide:
-                BorderSide(color: Colors.white.withOpacity(0.2), width: 1.r),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.2), width: 1.r),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(18.r),
-            borderSide:
-                BorderSide(color: Colors.white.withOpacity(0.2), width: 1.r),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.2), width: 1.r),
           ),
         ),
       ),
@@ -416,17 +405,13 @@ class _HomePageState extends State<HomePage> implements HomeViewModel {
               children: [
                 TextSpan(
                   text: "Hello, ",
-                  style: AppTextStyles.baseTextStyle.copyWith(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white),
+                  style: AppTextStyles.baseTextStyle
+                      .copyWith(fontSize: 18.sp, fontWeight: FontWeight.w400, color: Colors.white),
                 ),
                 TextSpan(
                   text: "Jane!",
-                  style: AppTextStyles.baseTextStyle.copyWith(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
+                  style: AppTextStyles.baseTextStyle
+                      .copyWith(fontSize: 18.sp, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ],
             ),

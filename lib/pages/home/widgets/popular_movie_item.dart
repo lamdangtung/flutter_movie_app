@@ -27,7 +27,7 @@ class PopularMovieItem extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 10.w),
       height: 160.h,
       decoration: BoxDecoration(
-        boxShadow: [AppShadows.primaryShadow],
+        borderRadius: BorderRadius.circular(20),
       ),
       width: double.infinity,
       child: Stack(
@@ -38,9 +38,11 @@ class PopularMovieItem extends StatelessWidget {
             child: CachedNetworkImage(
               fit: BoxFit.cover,
               imageUrl: AppApi.baseImageURL + backgroundImage,
-              progressIndicatorBuilder: (context, url, percent) => const Center(
-                child: AppShimmer(),
-              ),
+              progressIndicatorBuilder: (context, url, progress) {
+                return Center(
+                  child: CircularProgressIndicator(value: progress.progress),
+                );
+              },
             ),
           ),
           Positioned(
@@ -50,10 +52,8 @@ class PopularMovieItem extends StatelessWidget {
               width: 200.w,
               child: Text(
                 movieName,
-                style: AppTextStyles.baseTextStyle.copyWith(
-                    fontSize: 18.r,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white),
+                style: AppTextStyles.baseTextStyle
+                    .copyWith(fontSize: 18.r, fontWeight: FontWeight.w700, color: Colors.white),
               ),
             ),
           ),
@@ -80,9 +80,8 @@ class PopularMovieItem extends StatelessWidget {
                   ),
                   Text(
                     imdbRating,
-                    style: AppTextStyles.baseTextStyle.copyWith(
-                        fontSize: ScreenUtil().setSp(6),
-                        fontWeight: FontWeight.bold),
+                    style: AppTextStyles.baseTextStyle
+                        .copyWith(fontSize: ScreenUtil().setSp(6), fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
